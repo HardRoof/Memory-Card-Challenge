@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const Scoreboard = () => {
-	const [score, setScore] = useState(0);
-  const [bestScore, setbestScore] = useState(0);
-	
+const Scoreboard = () => {	
   return (
     <div className="header_scoreboard">
       <p>Score: </p>

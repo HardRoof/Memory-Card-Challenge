@@ -4,6 +4,31 @@ import Scoreboard from "./components/Scoreboard";
 import "./index.css";
 
 function App() {
+  const [data, setData] = useState(null);
+  const [cardsDisplayed, setCardsDisplayed] = useState([]);
+  const [caught, setCaught] = useState([]);
+  const [score, setScore] = useState(0);
+  const [bestScore, setbestScore] = useState(0);
+
+  const fetchCard = async () => {
+    try {
+      const response = await fetch(
+        "https://pokeapi.co/api/v2/pokemon?limit=2000&offset=0"
+      );
+      const dataResult = await response.json();
+      setData(dataResult);
+      console.log(dataResult);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCard();
+  }, []);
+
+  const handleCardClick = () => {};
+
   return;
   <>
     <header>
