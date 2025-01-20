@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from "react";
-
-const Scoreboard = () => {	
+const Scoreboard = ({ score, bestScore }) => {
   return (
-    <div className="header_scoreboard">
-      <p>Score: </p>
-      <p>{}</p>
-      <p>Best score: </p>
-      <p>{}</p>
+    <div className="headerScoreboard">
+      <div className="score">
+        <p>Score:</p>
+        <span>{score}</span>
+      </div>
+      <div className="bestScore">
+        <p>Best score:</p>
+        <span>{bestScore}</span>
+      </div>
     </div>
   );
 };

@@ -1,14 +1,24 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 
-const Card = ({ data, caught }) => {
-  const amountOfCards = 9;
-  const cards = Array.from({ length: amountOfCards }, (_, index) => (
-    <div key={index} className="card">
-      {/* <img src={`${data[index].url}sprites/front_default`} alt={data.name} /> */}
-      {/* <p>{data[2].name}</p> */}
-    </div>
-  ));
-  return <main>{cards}</main>;
+const Card = ({ handleCardClick, cardsDisplayed }) => {
+  const capitalizeFirstLetter = (string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  };
+  return (
+    <main>
+      {Array.from(cardsDisplayed).map((card) => (
+        <div
+          key={card.id}
+          className="card"
+          id={card.id}
+          onClick={handleCardClick}
+        >
+          <img src={card.img} alt={card.name} />
+          <p>{capitalizeFirstLetter(card.name)}</p>
+        </div>
+      ))}
+    </main>
+  );
 };
 
 export default Card;

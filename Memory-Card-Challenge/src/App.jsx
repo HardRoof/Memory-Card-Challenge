@@ -7,9 +7,8 @@ function App() {
   const [primaryData, setPrimaryData] = useState(null);
   const [caught, setCaught] = useState(new Set());
   const [cardsDisplayed, setCardsDisplayed] = useState(new Set());
-  const [pokemonData, setPokemonData] = useState([]);
-  // const [score, setScore] = useState(0);
-  // const [bestScore, setbestScore] = useState(0);
+  const [score, setScore] = useState(0);
+  const [bestScore, setbestScore] = useState(0);
 
   useEffect(() => {
     fetchPrimaryData();
@@ -22,33 +21,42 @@ function App() {
       );
       const primaryDataTemp = await response.json();
       setPrimaryData(primaryDataTemp.results);
-      while (cardsDisplayed <= 9) {
-        fetchPokemon();
-      }
+      fetchNinePokemons(primaryDataTemp.results);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const fetchPokemon = async () => {
-    let randomNumber = generateUniquePokeId();
+  const fetchNinePokemons = async (primaryData) => {
+    console.log(cardsDisplayed);
+    let localCardsDisplayed = new Set(cardsDisplayed);
+    while (localCardsDisplayed.size < 9) {
+      let randomNumber = generateUniquePokeId();
+      const card = await fetchSinglePokemon(primaryData, randomNumber);
+      localCardsDisplayed.add(card);
+    }
+    setCardsDisplayed(localCardsDisplayed);
+  };
+
+  const fetchSinglePokemon = async (primaryData, randomNumber) => {
     try {
       const response = await fetch(primaryData[randomNumber].url);
-      const pokemonDataTemp = await response.json();
-      // setPokemonData((prevArr) => [...prevArr, pokemonDataTemp]);
-      setCardsDisplayed((prevArr) => [...prevArr, pokemonDataTemp.id]);
+      const data = await response.json();
+      return {
+        id: data.id,
+        img: data.sprites.front_default,
+        name: data.name,
+      };
     } catch (error) {
       console.log(error);
+      return null;
     }
   };
 
   const generateUniquePokeId = () => {
     // Generates an array with all possible poke IDs
     const totalPokemons = 1025;
-    const allNumbersArr = Array.from(
-      { length: totalPokemons },
-      (_, i) => i + 1
-    );
+    const allNumbersArr = Array.from({ length: totalPokemons }, (_, i) => i);
     const unavailableNumbers = new Set([...cardsDisplayed, ...caught]);
 
     // Filter out existing numbers
@@ -61,9 +69,34 @@ function App() {
     return availableNumbers[randomIndex];
   };
 
-  // const handleCardClick = () => {};
+  const handleCardClick = async (e) => {
+    const id = parseInt(e.currentTarget.id, 10); // string -> integer
+    // Update Caught
+    setCaught((prevCaught) => {
+      if (!prevCaught.has(id)) {
+        // If hasn't been caught yet, proceed
+        const newCaught = new Set(prevCaught);
+        newCaught.add(id);
+
+        // Update the scores
+        setScore((prevScore) => {
+          const newScore = prevScore + 1;
+          setbestScore((prevBestScore) => Math.max(prevBestScore, newScore));
+          return newScore;
+        });
+        return newCaught;
+      } else {
+        console.log(`ID ${id} is already caught`);
+        return prevCaught;
+      }
+    });
+    setCardsDisplayed(new Set());
+    await fetchNinePokemons(primaryData);
+  };
+
   const handleClick = () => {
-    console.log(primaryData);
+    console.log(caught);
+    console.log(cardsDisplayed);
   };
 
   return (
@@ -74,9 +107,14 @@ function App() {
           Catch points by clicking on each Pokémon, but beware: you can only
           catch each one once!
         </p>
-        <Scoreboard />
+        <Scoreboard score={score} bestScore={bestScore} />
       </header>
-      {primaryData && <Card primaryData={primaryData} caught={caught} />}
+      {primaryData && (
+        <Card
+          handleCardClick={handleCardClick}
+          cardsDisplayed={cardsDisplayed}
+        />
+      )}
       <footer>
         Pokémon Memory Card Challenge
         <img
