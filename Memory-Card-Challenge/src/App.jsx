@@ -8,11 +8,21 @@ function App() {
   const [caught, setCaught] = useState(new Set());
   const [cardsDisplayed, setCardsDisplayed] = useState(new Set());
   const [score, setScore] = useState(0);
-  const [bestScore, setbestScore] = useState(0);
+  const [bestScore, setBestScore] = useState(0);
 
   useEffect(() => {
     fetchPrimaryData();
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      // Immediatily invokes function and keeps await/async approach (IIFE)
+      if (cardsDisplayed.size === 0 && primaryData) {
+        const newCardsDisplayed = await fetchNinePokemons(primaryData);
+        setCardsDisplayed(newCardsDisplayed);
+      }
+    })();
+  }, [cardsDisplayed]);
 
   const fetchPrimaryData = async () => {
     try {
@@ -21,21 +31,47 @@ function App() {
       );
       const primaryDataTemp = await response.json();
       setPrimaryData(primaryDataTemp.results);
-      fetchNinePokemons(primaryDataTemp.results);
+      const tempCardsDisplayed = await fetchNinePokemons(
+        primaryDataTemp.results
+      );
+      setCardsDisplayed(tempCardsDisplayed);
     } catch (error) {
       console.log(error);
     }
   };
 
   const fetchNinePokemons = async (primaryData) => {
-    console.log(cardsDisplayed);
-    let localCardsDisplayed = new Set(cardsDisplayed);
-    while (localCardsDisplayed.size < 9) {
-      let randomNumber = generateUniquePokeId();
-      const card = await fetchSinglePokemon(primaryData, randomNumber);
-      localCardsDisplayed.add(card);
+    const localNewCardsDisplayed = new Set();
+    const prevNumbers = new Set();
+    while (
+      //Next step
+      (localNewCardsDisplayed.size < 8 ||
+        localNewCardsDisplayed.size == caught.size) &&
+      caught.size !== 0
+    ) {
+      const randomIndex = Math.floor(Math.random() * caught.size);
+      const card = await fetchSinglePokemon(primaryData, randomIndex);
+      localNewCardsDisplayed.add(card);
     }
-    setCardsDisplayed(localCardsDisplayed);
+    while (localNewCardsDisplayed.size < 9) {
+      let randomNumber = generateUniquePokeId(prevNumbers);
+      const card = await fetchSinglePokemon(primaryData, randomNumber);
+      if (!prevNumbers.has(card.id) && !localNewCardsDisplayed.has(card)) {
+        localNewCardsDisplayed.add(card);
+        prevNumbers.add(card.id);
+      }
+    }
+    return localNewCardsDisplayed;
+  };
+
+  const generateUniquePokeId = (prevNumbers) => {
+    const totalPokemons = 1025;
+    const allNumbersArr = Array.from({ length: totalPokemons }, (_, i) => i);
+    const availableNumbers = allNumbersArr.filter(
+      (num) => !prevNumbers.has(num)
+    );
+    const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+    return availableNumbers[randomIndex];
   };
 
   const fetchSinglePokemon = async (primaryData, randomNumber) => {
@@ -53,43 +89,30 @@ function App() {
     }
   };
 
-  const generateUniquePokeId = () => {
-    // Generates an array with all possible poke IDs
-    const totalPokemons = 1025;
-    const allNumbersArr = Array.from({ length: totalPokemons }, (_, i) => i);
-    const unavailableNumbers = new Set([...cardsDisplayed, ...caught]);
-
-    // Filter out existing numbers
-    const availableNumbers = allNumbersArr.filter(
-      (num) => !unavailableNumbers.has(num)
-    );
-
-    // Randomly select a number from the remaining numbers
-    const randomIndex = Math.floor(Math.random() * availableNumbers.length);
-    return availableNumbers[randomIndex];
-  };
-
   const handleCardClick = async (e) => {
     const id = parseInt(e.currentTarget.id, 10); // string -> integer
-    // Update Caught
-    setCaught((prevCaught) => {
-      if (!prevCaught.has(id)) {
-        // If hasn't been caught yet, proceed
+
+    // Check if the card has already been caught
+    if (!caught.has(id)) {
+      // Update Caught
+      setCaught((prevCaught) => {
         const newCaught = new Set(prevCaught);
         newCaught.add(id);
-
-        // Update the scores
-        setScore((prevScore) => {
-          const newScore = prevScore + 1;
-          setbestScore((prevBestScore) => Math.max(prevBestScore, newScore));
-          return newScore;
-        });
         return newCaught;
-      } else {
-        console.log(`ID ${id} is already caught`);
-        return prevCaught;
-      }
-    });
+      });
+
+      // Update the scores
+      setScore((prevScore) => {
+        const newScore = prevScore + 1;
+        setBestScore((prevBestScore) => Math.max(prevBestScore, newScore));
+        return newScore;
+      });
+    } else {
+      setScore(0);
+      setCaught(new Set());
+    }
+
+    // Reset cards displayed and fetch new ones
     setCardsDisplayed(new Set());
     await fetchNinePokemons(primaryData);
   };
