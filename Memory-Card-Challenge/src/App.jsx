@@ -43,19 +43,14 @@ function App() {
   const fetchNinePokemons = async (primaryData) => {
     const localNewCardsDisplayed = new Set();
     const prevNumbers = new Set();
-    while (
-      //Next step
-      (localNewCardsDisplayed.size < 8 ||
-        localNewCardsDisplayed.size == caught.size) &&
-      caught.size !== 0
-    ) {
-      const randomIndex = Math.floor(Math.random() * caught.size);
-      const card = await fetchSinglePokemon(primaryData, randomIndex);
-      localNewCardsDisplayed.add(card);
-    }
+    let pokeNumber;
     while (localNewCardsDisplayed.size < 9) {
-      let randomNumber = generateUniquePokeId(prevNumbers);
-      const card = await fetchSinglePokemon(primaryData, randomNumber);
+      if (localNewCardsDisplayed.size <= caught.size) {
+        pokeNumber; // Here: pick a number from Caught, if already picked(prevNumbers), pick another one
+      } else {
+        pokeNumber = generateUniquePokeId(prevNumbers);
+      }
+      const card = await fetchSinglePokemon(primaryData, pokeNumber);
       if (!prevNumbers.has(card.id) && !localNewCardsDisplayed.has(card)) {
         localNewCardsDisplayed.add(card);
         prevNumbers.add(card.id);
