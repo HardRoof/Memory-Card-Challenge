@@ -45,9 +45,13 @@ function App() {
     const prevNumbers = new Set();
     let pokeNumber;
     while (localNewCardsDisplayed.size < 9) {
-      if (localNewCardsDisplayed.size <= caught.size) {
-        pokeNumber; // Here: pick a number from Caught, if already picked(prevNumbers), pick another one
+      if (localNewCardsDisplayed.size < caught.size) {
+        do {
+          pokeNumber =
+            Array.from(caught)[Math.floor(Math.random() * caught.size)];
+        } while (prevNumbers.has(pokeNumber));
       } else {
+        console.log("Should generate Unique");
         pokeNumber = generateUniquePokeId(prevNumbers);
       }
       const card = await fetchSinglePokemon(primaryData, pokeNumber);
@@ -63,15 +67,15 @@ function App() {
     const totalPokemons = 1025;
     const allNumbersArr = Array.from({ length: totalPokemons }, (_, i) => i);
     const availableNumbers = allNumbersArr.filter(
-      (num) => !prevNumbers.has(num)
+      (num) => !prevNumbers.has(num) && !caughtNumbers.has(num)
     );
     const randomIndex = Math.floor(Math.random() * availableNumbers.length);
     return availableNumbers[randomIndex];
   };
 
-  const fetchSinglePokemon = async (primaryData, randomNumber) => {
+  const fetchSinglePokemon = async (primaryData, pokeNumber) => {
     try {
-      const response = await fetch(primaryData[randomNumber].url);
+      const response = await fetch(primaryData[pokeNumber - 1].url);
       const data = await response.json();
       return {
         id: data.id,
