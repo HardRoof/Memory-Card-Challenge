@@ -15,14 +15,28 @@ function App() {
   }, []);
 
   useEffect(() => {
+    // Immediatily invokes function and keeps await/async approach (IIFE)
     (async () => {
-      // Immediatily invokes function and keeps await/async approach (IIFE)
+      // Check if no cards are currently displayed and primaryData is available
       if (cardsDisplayed.size === 0 && primaryData) {
+        // Fetch nine new Pokémon cards asynchronously
         const newCardsDisplayed = await fetchNinePokemons(primaryData);
+
+        // Update the state with the new set of displayed cards
         setCardsDisplayed(newCardsDisplayed);
+
+        // Shuffle the newly fetched cards.
+        //PS: Used newCardsDisplayed rather than cardsDisplayed immediately after
+        // updating the state with setCardsDisplayed is due to the asynchronous nature of state updates in React.
+        const shuffledCards = Array.from(newCardsDisplayed).sort(
+          () => Math.random() - 0.5
+        );
+
+        // Update the state with the shuffled cards
+        setCards(shuffledCards);
       }
     })();
-  }, [cardsDisplayed]);
+  }, [cardsDisplayed]); // Effect runs when cardsDisplayed changes
 
   const fetchPrimaryData = async () => {
     try {
@@ -41,25 +55,41 @@ function App() {
   };
 
   const fetchNinePokemons = async (primaryData) => {
+    // Set to locally store the new Pokémon cards to be displayed
     const localNewCardsDisplayed = new Set();
+
+    // Set to keep track of previously used Pokémon numbers
     const prevNumbers = new Set();
     let pokeNumber;
-    while (localNewCardsDisplayed.size < 9) {
-      if (localNewCardsDisplayed.size < caught.size) {
-        do {
-          pokeNumber =
-            Array.from(caught)[Math.floor(Math.random() * caught.size)];
-        } while (prevNumbers.has(pokeNumber));
-      } else {
-        console.log("Should generate Unique");
-        pokeNumber = generateUniquePokeId(prevNumbers);
-      }
+
+    // Encapsualted function to avoid repetion, it add each poke card
+    const addPokemonCard = async (pokeNumber) => {
       const card = await fetchSinglePokemon(primaryData, pokeNumber);
       if (!prevNumbers.has(card.id) && !localNewCardsDisplayed.has(card)) {
         localNewCardsDisplayed.add(card);
         prevNumbers.add(card.id);
       }
+    };
+
+    // Loop through the caught Pokémon set to add up to 8 unique Pokémon cards
+    let count = 0;
+    for (let i = 0; i < caught.size; i++) {
+      if (count >= 8) break;
+      let pokeNumber;
+      do {
+        pokeNumber =
+          Array.from(caught)[Math.floor(Math.random() * caught.size)];
+      } while (prevNumbers.has(pokeNumber)); // Loops until pokeNumber isn't a previous number
+      await addPokemonCard(pokeNumber);
+      count++;
     }
+
+    // Ensure the total number of Pokémon cards displayed is 9
+    while (localNewCardsDisplayed.size < 9) {
+      pokeNumber = generateUniquePokeId(prevNumbers);
+      await addPokemonCard(pokeNumber);
+    }
+
     return localNewCardsDisplayed;
   };
 
@@ -67,7 +97,7 @@ function App() {
     const totalPokemons = 1025;
     const allNumbersArr = Array.from({ length: totalPokemons }, (_, i) => i);
     const availableNumbers = allNumbersArr.filter(
-      (num) => !prevNumbers.has(num) && !caughtNumbers.has(num)
+      (num) => !prevNumbers.has(num) && !caught.has(num)
     );
     const randomIndex = Math.floor(Math.random() * availableNumbers.length);
     return availableNumbers[randomIndex];
@@ -116,10 +146,10 @@ function App() {
     await fetchNinePokemons(primaryData);
   };
 
-  const handleClick = () => {
-    console.log(caught);
-    console.log(cardsDisplayed);
-  };
+  // const handleClick = () => {
+  //   console.log(caught);
+  //   console.log(cardsDisplayed);
+  // };
 
   return (
     <>
@@ -147,7 +177,7 @@ function App() {
           onClick={() => window.open("https://github.com/HardRoof", "_blank")}
         />
       </footer>
-      <button onClick={handleClick}>Click Me</button>
+      {/* <button onClick={handleClick}>Click Me</button> */}
     </>
   );
 }
