@@ -26,14 +26,13 @@ function App() {
         setCardsDisplayed(newCardsDisplayed);
 
         // Shuffle the newly fetched cards.
-        //PS: Used newCardsDisplayed rather than cardsDisplayed immediately after
-        // updating the state with setCardsDisplayed is due to the asynchronous nature of state updates in React.
+        //PS: Used newCardsDisplayed rather than cardsDisplayed immediately after updating the state with setCardsDisplayed is due to the asynchronous nature of state updates in React.
         const shuffledCards = Array.from(newCardsDisplayed).sort(
           () => Math.random() - 0.5
         );
 
         // Update the state with the shuffled cards
-        setCards(shuffledCards);
+        setCardsDisplayed(shuffledCards);
       }
     })();
   }, [cardsDisplayed]); // Effect runs when cardsDisplayed changes
@@ -146,19 +145,16 @@ function App() {
     await fetchNinePokemons(primaryData);
   };
 
-  // const handleClick = () => {
-  //   console.log(caught);
-  //   console.log(cardsDisplayed);
-  // };
-
   return (
     <>
       <header>
-        <div>Pokémon Memory Card Challenge</div>{" "}
-        <p>
-          Catch points by clicking on each Pokémon, but beware: you can only
-          catch each one once!
-        </p>
+        <div>
+          <h1>Pokémon Memory Card Challenge</h1>{" "}
+          <p>
+            Catch points by clicking on each Pokémon, but beware: you can only
+            catch each one once!
+          </p>
+        </div>
         <Scoreboard score={score} bestScore={bestScore} />
       </header>
       {primaryData && (
@@ -173,11 +169,10 @@ function App() {
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Octicons-mark-github.svg/900px-Octicons-mark-github.svg.png?20180806170715"
           alt="Github"
           id="github"
-          style={{ height: "30px" }}
+          style={{ height: "30px", filter: "invert(100%)" }}
           onClick={() => window.open("https://github.com/HardRoof", "_blank")}
         />
       </footer>
-      {/* <button onClick={handleClick}>Click Me</button> */}
     </>
   );
 }
